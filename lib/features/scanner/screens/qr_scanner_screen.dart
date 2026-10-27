@@ -38,7 +38,8 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Manage camera lifecycle
     if (!_scannerController.value.isInitialized) return;
-    if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
       _scannerController.stop();
     } else if (state == AppLifecycleState.resumed) {
       _scannerController.start();
@@ -78,15 +79,14 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     });
 
     try {
-      // 1. Fetch visitor via GET /visitors/{id}
-      final visitor = await ref.read(visitorRepositoryProvider).getVisitorById(id);
-
-      // 2. Sync to Riverpod visitor list
-      await ref.read(visitorListProvider.notifier).fetchAndSyncVisitor(visitor.id);
+      // 1. Fetch visitor via GET /visitors/{id} and sync into state
+      final visitor = await ref
+          .read(visitorListProvider.notifier)
+          .fetchAndSyncVisitor(id);
 
       if (!mounted) return;
 
-      // 3. Navigate to details screen (staff must explicitly initiate check-in/out)
+      // 2. Navigate to details screen (staff member explicitly decides to check in / out)
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => VisitorDetailsScreen(initialVisitor: visitor),
@@ -115,7 +115,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     }
   }
 
-  /// Manual ID lookup dialog (valuable on Android Emulators or if QR is unreadable)
+  /// Manual ID lookup dialog (valuable on Android Emulators or if QR is physically damaged)
   Future<void> _showManualLookupDialog() async {
     final controller = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -128,10 +128,11 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
           key: formKey,
           child: TextFormField(
             controller: controller,
+            autofocus: true,
             decoration: const InputDecoration(
               labelText: 'Visitor ID',
               hintText: 'e.g. 1 or server ID',
-              prefixIcon: Icon(Icons.tag),
+              prefixIcon: Icon(Icons.tag_rounded),
             ),
             validator: (val) {
               if (val == null || val.trim().isEmpty) {
@@ -169,13 +170,13 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
       backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text('Scan Visitor QR Pass'),
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.black87,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: Icon(
-              _isTorchOn ? Icons.flash_on : Icons.flash_off,
-              color: _isTorchOn ? Colors.yellow : Colors.white,
+              _isTorchOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+              color: _isTorchOn ? Colors.amber : Colors.white,
             ),
             tooltip: 'Toggle Flashlight',
             onPressed: () async {
@@ -192,7 +193,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
       ),
       body: Stack(
         children: [
-          // 1. Camera Scanner Preview
+          // 1. Camera Scanner Viewport
           MobileScanner(
             controller: _scannerController,
             onDetect: _handleBarcodeDetected,
@@ -203,30 +204,46 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.videocam_off, size: 54, color: Colors.white70),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white12,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.videocam_off_rounded,
+                          size: 48,
+                          color: Colors.white70,
+                        ),
+                      ),
                       const SizedBox(height: 16),
                       const Text(
                         'Camera Access Unavailable',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: 17,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        error.errorCode == MobileScannerErrorCode.permissionDenied
-                            ? 'Camera permission was denied. Please grant camera access in app settings to scan QR codes.'
+                        error.errorCode ==
+                                MobileScannerErrorCode.permissionDenied
+                            ? 'Camera permission was denied. Grant camera access in Android app settings to scan physical QR passes.'
                             : 'Unable to initialize camera preview: ${error.errorDetails?.message ?? error.toString()}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white70, fontSize: 14),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
                       ),
                       const SizedBox(height: 20),
-                      AppButton(
+                      AppButton.primary(
                         label: 'Enter ID Manually',
-                        icon: Icons.keyboard,
+                        icon: Icons.keyboard_rounded,
                         onPressed: _showManualLookupDialog,
-                        width: 200,
+                        backgroundColor: AppColors.accentTeal,
+                        width: 220,
                       ),
                     ],
                   ),
@@ -235,24 +252,26 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
             },
           ),
 
-          // 2. Scanning Overlay Frame
+          // 2. Focused Reticle Frame
           _buildScannerOverlay(),
 
-          // 3. Loading Indicator when resolving QR ID
+          // 3. Loading Overlay when resolving ID
           if (_isProcessingScan)
             Container(
-              color: Colors.black.withValues(alpha: 0.65),
+              color: Colors.black.withValues(alpha: 0.7),
               child: const Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.accentTeal),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.accentTeal,
+                      ),
                       strokeWidth: 3,
                     ),
                     SizedBox(height: 16),
                     Text(
-                      'Looking up visitor record...',
+                      'Looking up visitor pass...',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 15,
@@ -264,7 +283,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
               ),
             ),
 
-          // 4. Instructions and Error Message at bottom
+          // 4. Instructional Banner at bottom
           Positioned(
             bottom: 30,
             left: 20,
@@ -274,19 +293,29 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                 if (_lookupErrorMessage != null) ...[
                   Container(
                     margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
-                      color: AppColors.errorRed.withValues(alpha: 0.9),
+                      color: AppColors.errorRed.withValues(alpha: 0.95),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline, color: Colors.white, size: 18),
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _lookupErrorMessage!,
-                            style: const TextStyle(color: Colors.white, fontSize: 13),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ],
@@ -294,20 +323,36 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                   ),
                 ],
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.75),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.white24),
                   ),
-                  child: const Text(
-                    'Align visitor QR code within the frame to verify details.\nCheck-in/out is confirmed on the details screen.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      height: 1.3,
-                    ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.center_focus_strong_rounded,
+                        color: AppColors.accentTeal,
+                        size: 20,
+                      ),
+                      SizedBox(width: 10),
+                      Flexible(
+                        child: Text(
+                          'Point camera at visitor pass QR code\nCheck-in is verified on details screen',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -318,11 +363,11 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     );
   }
 
-  /// Scanning target reticle frame
+  /// Reticle Overlay Frame with responsive dimensions
   Widget _buildScannerOverlay() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final scanSize = constraints.maxWidth * 0.72;
+        final scanSize = (constraints.maxWidth * 0.72).clamp(200.0, 300.0);
 
         return Stack(
           children: [
@@ -331,8 +376,11 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                 width: scanSize,
                 height: scanSize,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.accentTeal, width: 2.5),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.accentTeal.withValues(alpha: 0.6),
+                    width: 2,
+                  ),
                 ),
                 child: Stack(
                   children: [
@@ -345,8 +393,14 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                         height: 24,
                         decoration: const BoxDecoration(
                           border: Border(
-                            top: BorderSide(color: Colors.white, width: 4),
-                            left: BorderSide(color: Colors.white, width: 4),
+                            top: BorderSide(
+                              color: AppColors.accentTeal,
+                              width: 4,
+                            ),
+                            left: BorderSide(
+                              color: AppColors.accentTeal,
+                              width: 4,
+                            ),
                           ),
                         ),
                       ),
@@ -360,8 +414,14 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                         height: 24,
                         decoration: const BoxDecoration(
                           border: Border(
-                            top: BorderSide(color: Colors.white, width: 4),
-                            right: BorderSide(color: Colors.white, width: 4),
+                            top: BorderSide(
+                              color: AppColors.accentTeal,
+                              width: 4,
+                            ),
+                            right: BorderSide(
+                              color: AppColors.accentTeal,
+                              width: 4,
+                            ),
                           ),
                         ),
                       ),
@@ -375,8 +435,14 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                         height: 24,
                         decoration: const BoxDecoration(
                           border: Border(
-                            bottom: BorderSide(color: Colors.white, width: 4),
-                            left: BorderSide(color: Colors.white, width: 4),
+                            bottom: BorderSide(
+                              color: AppColors.accentTeal,
+                              width: 4,
+                            ),
+                            left: BorderSide(
+                              color: AppColors.accentTeal,
+                              width: 4,
+                            ),
                           ),
                         ),
                       ),
@@ -390,8 +456,14 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                         height: 24,
                         decoration: const BoxDecoration(
                           border: Border(
-                            bottom: BorderSide(color: Colors.white, width: 4),
-                            right: BorderSide(color: Colors.white, width: 4),
+                            bottom: BorderSide(
+                              color: AppColors.accentTeal,
+                              width: 4,
+                            ),
+                            right: BorderSide(
+                              color: AppColors.accentTeal,
+                              width: 4,
+                            ),
                           ),
                         ),
                       ),

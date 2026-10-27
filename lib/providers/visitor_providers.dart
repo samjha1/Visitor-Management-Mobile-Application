@@ -21,8 +21,23 @@ class VisitorSearchQueryNotifier extends Notifier<String> {
 /// Search query provider for filtering visitors in the directory.
 final visitorSearchQueryProvider =
     NotifierProvider<VisitorSearchQueryNotifier, String>(
-  VisitorSearchQueryNotifier.new,
-);
+      VisitorSearchQueryNotifier.new,
+    );
+
+/// Notifier managing status filter ('All', 'Registered', 'Checked In', 'Checked Out').
+class VisitorStatusFilterNotifier extends Notifier<String> {
+  @override
+  String build() => 'All';
+
+  void setFilter(String filter) => state = filter;
+  void reset() => state = 'All';
+}
+
+/// Status filter provider for directory screen.
+final visitorStatusFilterProvider =
+    NotifierProvider<VisitorStatusFilterNotifier, String>(
+      VisitorStatusFilterNotifier.new,
+    );
 
 /// Model representing the calculated dashboard metrics.
 class DashboardMetrics {
@@ -194,22 +209,29 @@ class VisitorListNotifier extends AsyncNotifier<List<Visitor>> {
 /// Main visitor list provider.
 final visitorListProvider =
     AsyncNotifierProvider<VisitorListNotifier, List<Visitor>>(
-  VisitorListNotifier.new,
-);
+      VisitorListNotifier.new,
+    );
 
-/// Provider for filtered visitor records based on search query (name or mobile).
+/// Provider for filtered visitor records based on search query (name or mobile) and status filter.
 final filteredVisitorsProvider = Provider<AsyncValue<List<Visitor>>>((ref) {
   final asyncVisitors = ref.watch(visitorListProvider);
   final query = ref.watch(visitorSearchQueryProvider).trim().toLowerCase();
+  final statusFilter = ref.watch(visitorStatusFilterProvider);
 
   return asyncVisitors.whenData((visitors) {
-    if (query.isEmpty) return visitors;
-
     return visitors.where((visitor) {
-      final nameMatches = visitor.name.toLowerCase().contains(query);
-      final mobileMatches = visitor.mobile.toLowerCase().contains(query);
-      final projectMatches = visitor.project.toLowerCase().contains(query);
-      return nameMatches || mobileMatches || projectMatches;
+      if (statusFilter != 'All' && visitor.status != statusFilter) {
+        return false;
+      }
+
+      if (query.isNotEmpty) {
+        final nameMatches = visitor.name.toLowerCase().contains(query);
+        final mobileMatches = visitor.mobile.toLowerCase().contains(query);
+        final projectMatches = visitor.project.toLowerCase().contains(query);
+        return nameMatches || mobileMatches || projectMatches;
+      }
+
+      return true;
     }).toList();
   });
 });

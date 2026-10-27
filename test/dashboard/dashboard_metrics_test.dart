@@ -13,10 +13,22 @@ void main() {
       final yesterday = DateTime(2026, 10, 26, 23, 59);
       final tomorrow = DateTime(2026, 10, 28, 0, 1);
 
-      expect(DateFormatter.isToday(sameDayMorning, customToday: referenceDate), isTrue);
-      expect(DateFormatter.isToday(sameDayNight, customToday: referenceDate), isTrue);
-      expect(DateFormatter.isToday(yesterday, customToday: referenceDate), isFalse);
-      expect(DateFormatter.isToday(tomorrow, customToday: referenceDate), isFalse);
+      expect(
+        DateFormatter.isToday(sameDayMorning, customToday: referenceDate),
+        isTrue,
+      );
+      expect(
+        DateFormatter.isToday(sameDayNight, customToday: referenceDate),
+        isTrue,
+      );
+      expect(
+        DateFormatter.isToday(yesterday, customToday: referenceDate),
+        isFalse,
+      );
+      expect(
+        DateFormatter.isToday(tomorrow, customToday: referenceDate),
+        isFalse,
+      );
       expect(DateFormatter.isToday(null, customToday: referenceDate), isFalse);
     });
 

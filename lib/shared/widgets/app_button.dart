@@ -11,6 +11,7 @@ class AppButton extends StatelessWidget {
   final Color? backgroundColor;
   final Color? foregroundColor;
   final double? width;
+  final double height;
 
   const AppButton({
     super.key,
@@ -22,7 +23,47 @@ class AppButton extends StatelessWidget {
     this.backgroundColor,
     this.foregroundColor,
     this.width,
+    this.height = 48.0,
   });
+
+  /// Factory for primary action buttons (Deep Navy or Accent Teal)
+  factory AppButton.primary({
+    required String label,
+    required VoidCallback? onPressed,
+    bool isLoading = false,
+    IconData? icon,
+    Color? backgroundColor,
+    double? width,
+  }) {
+    return AppButton(
+      label: label,
+      onPressed: onPressed,
+      isLoading: isLoading,
+      icon: icon,
+      backgroundColor: backgroundColor ?? AppColors.primaryNavy,
+      width: width,
+    );
+  }
+
+  /// Factory for secondary / outlined action buttons
+  factory AppButton.secondary({
+    required String label,
+    required VoidCallback? onPressed,
+    bool isLoading = false,
+    IconData? icon,
+    Color? foregroundColor,
+    double? width,
+  }) {
+    return AppButton(
+      label: label,
+      onPressed: onPressed,
+      isLoading: isLoading,
+      isOutlined: true,
+      icon: icon,
+      foregroundColor: foregroundColor ?? AppColors.primaryNavy,
+      width: width,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +77,9 @@ class AppButton extends StatelessWidget {
         child: CircularProgressIndicator(
           strokeWidth: 2.2,
           valueColor: AlwaysStoppedAnimation<Color>(
-            isOutlined ? (foregroundColor ?? AppColors.primaryNavy) : Colors.white,
+            isOutlined
+                ? (foregroundColor ?? AppColors.primaryNavy)
+                : Colors.white,
           ),
         ),
       );
@@ -47,11 +90,13 @@ class AppButton extends StatelessWidget {
         children: [
           Icon(icon, size: 18),
           const SizedBox(width: 8),
-          Text(label),
+          Flexible(
+            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
         ],
       );
     } else {
-      childContent = Text(label);
+      childContent = Text(label, maxLines: 1, overflow: TextOverflow.ellipsis);
     }
 
     Widget button;
@@ -60,11 +105,15 @@ class AppButton extends StatelessWidget {
         onPressed: effectiveOnPressed,
         style: OutlinedButton.styleFrom(
           foregroundColor: foregroundColor ?? AppColors.primaryNavy,
+          minimumSize: Size(width ?? double.infinity, height),
           side: BorderSide(
             color: effectiveOnPressed == null
-                ? AppColors.textMuted
-                : (foregroundColor ?? AppColors.primaryNavy),
-            width: 1.5,
+                ? AppColors.borderLight
+                : (foregroundColor ?? AppColors.borderMedium),
+            width: 1.2,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
         ),
         child: childContent,
@@ -75,6 +124,11 @@ class AppButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor ?? AppColors.primaryNavy,
           foregroundColor: foregroundColor ?? Colors.white,
+          minimumSize: Size(width ?? double.infinity, height),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
         child: childContent,
       );

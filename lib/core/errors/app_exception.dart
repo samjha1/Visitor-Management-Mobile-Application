@@ -4,11 +4,7 @@ abstract class AppException implements Exception {
   final String? technicalDetails;
   final int? statusCode;
 
-  const AppException(
-    this.message, {
-    this.technicalDetails,
-    this.statusCode,
-  });
+  const AppException(this.message, {this.technicalDetails, this.statusCode});
 
   @override
   String toString() => message;
@@ -17,7 +13,8 @@ abstract class AppException implements Exception {
 /// Network connectivity issues (e.g. no internet, socket exception).
 class NetworkException extends AppException {
   const NetworkException([
-    super.message = 'No network connectivity. Please check your internet connection.',
+    super.message =
+        'No network connectivity. Please check your internet connection.',
     String? details,
   ]) : super(technicalDetails: details);
 }
@@ -50,7 +47,8 @@ class NotFoundException extends AppException {
 /// Malformed or unparseable JSON response.
 class ParseException extends AppException {
   const ParseException([
-    super.message = 'Failed to process data from the server. Unexpected response format.',
+    super.message =
+        'Failed to process data from the server. Unexpected response format.',
     String? details,
   ]) : super(technicalDetails: details);
 }
@@ -63,21 +61,24 @@ class InvalidTransitionException extends AppException {
 /// Invalid QR code payload (e.g. empty, malformed, not a valid visitor ID).
 class InvalidQrCodeException extends AppException {
   const InvalidQrCodeException([
-    super.message = 'The scanned QR code is invalid or does not contain a valid visitor ID.',
+    super.message =
+        'The scanned QR code is invalid or does not contain a valid visitor ID.',
   ]);
 }
 
 /// Camera permission denied or restricted.
 class CameraPermissionException extends AppException {
   const CameraPermissionException([
-    super.message = 'Camera permission is required to scan QR codes. Please enable camera access in app settings.',
+    super.message =
+        'Camera permission is required to scan QR codes. Please enable camera access in app settings.',
   ]);
 }
 
 /// Configuration error (e.g. invalid or placeholder base URL).
 class ConfigurationException extends AppException {
   const ConfigurationException([
-    super.message = 'API base URL is not configured or is invalid. Please check your .env configuration.',
+    super.message =
+        'API base URL is not configured or is invalid. Please check your .env configuration.',
   ]);
 }
 

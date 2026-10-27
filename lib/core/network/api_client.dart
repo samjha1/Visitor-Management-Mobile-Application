@@ -11,7 +11,8 @@ class ApiClient {
   ApiClient({Dio? customDio, String? baseUrl}) {
     final effectiveBaseUrl = baseUrl ?? AppConfig.apiBaseUrl;
 
-    dio = customDio ??
+    dio =
+        customDio ??
         Dio(
           BaseOptions(
             baseUrl: effectiveBaseUrl,
@@ -30,7 +31,8 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) {
           // Verify configuration before firing request
-          if (AppConfig.isPlaceholderUrl && !options.uri.toString().contains('mock')) {
+          if (AppConfig.isPlaceholderUrl &&
+              !options.uri.toString().contains('mock')) {
             // Placeholder detected, proceed with caution or log warning
           }
           return handler.next(options);
@@ -58,7 +60,9 @@ class ApiClient {
     }
 
     if (error is! DioException) {
-      return ServerException('An unexpected error occurred: ${error.toString()}');
+      return ServerException(
+        'An unexpected error occurred: ${error.toString()}',
+      );
     }
 
     switch (error.type) {
@@ -89,7 +93,9 @@ class ApiClient {
         String message = 'Server returned error ($statusCode)';
         if (responseData is Map && responseData.containsKey('message')) {
           message = responseData['message'].toString();
-        } else if (responseData is String && responseData.isNotEmpty && responseData.length < 100) {
+        } else if (responseData is String &&
+            responseData.isNotEmpty &&
+            responseData.length < 100) {
           message = responseData;
         } else if (error.response?.statusMessage != null) {
           message = error.response!.statusMessage!;
@@ -105,12 +111,16 @@ class ApiClient {
         return const ServerException('The request was cancelled.');
 
       case DioExceptionType.badCertificate:
-        return const NetworkException('Security certificate verification failed.');
+        return const NetworkException(
+          'Security certificate verification failed.',
+        );
 
       case DioExceptionType.unknown:
       default:
         if (error.error is SocketException) {
-          return const NetworkException('Unable to reach the server. Please verify network access.');
+          return const NetworkException(
+            'Unable to reach the server. Please verify network access.',
+          );
         }
         return ServerException(
           'An unexpected network error occurred.',

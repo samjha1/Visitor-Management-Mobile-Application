@@ -9,7 +9,7 @@ class VisitorRepository {
   final VisitorApiService _apiService;
 
   VisitorRepository({VisitorApiService? apiService})
-      : _apiService = apiService ?? VisitorApiService();
+    : _apiService = apiService ?? VisitorApiService();
 
   /// Retrieve all visitors from the API.
   Future<List<Visitor>> getAllVisitors() async {

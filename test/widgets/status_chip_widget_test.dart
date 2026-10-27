@@ -15,7 +15,7 @@ void main() {
       );
 
       expect(find.text(AppConstants.statusRegistered), findsOneWidget);
-      expect(find.byIcon(Icons.how_to_reg_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.schedule_rounded), findsOneWidget);
     });
 
     testWidgets('Renders Checked In status correctly', (tester) async {
@@ -28,7 +28,7 @@ void main() {
       );
 
       expect(find.text(AppConstants.statusCheckedIn), findsOneWidget);
-      expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
     });
 
     testWidgets('Renders Checked Out status correctly', (tester) async {
@@ -41,7 +41,7 @@ void main() {
       );
 
       expect(find.text(AppConstants.statusCheckedOut), findsOneWidget);
-      expect(find.byIcon(Icons.done_all), findsOneWidget);
+      expect(find.byIcon(Icons.done_all_rounded), findsOneWidget);
     });
   });
 }

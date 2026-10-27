@@ -55,7 +55,9 @@ class VisitorApiService {
 
   /// POST /visitors
   /// Registers a new visitor. Server assigns and returns the unique ID.
-  Future<Map<String, dynamic>> createVisitor(Map<String, dynamic> payload) async {
+  Future<Map<String, dynamic>> createVisitor(
+    Map<String, dynamic> payload,
+  ) async {
     try {
       final response = await _dio.post(
         AppConstants.visitorsEndpoint,

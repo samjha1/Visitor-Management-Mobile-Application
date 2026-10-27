@@ -37,21 +37,24 @@ void main() {
       expect(visitor.checkOutTime, isNull);
     });
 
-    test('Correctly handles integer IDs from server and converts to String', () {
-      final json = {
-        'id': 42,
-        'name': 'Bob Bobson',
-        'mobile': '0123456789',
-        'visitor_type': 'Vendor',
-        'project': 'Project B',
-        'purpose': 'Delivery',
-        'status': 'Registered',
-      };
+    test(
+      'Correctly handles integer IDs from server and converts to String',
+      () {
+        final json = {
+          'id': 42,
+          'name': 'Bob Bobson',
+          'mobile': '0123456789',
+          'visitor_type': 'Vendor',
+          'project': 'Project B',
+          'purpose': 'Delivery',
+          'status': 'Registered',
+        };
 
-      final visitor = Visitor.fromJson(json);
-      expect(visitor.id, '42');
-      expect(visitor.mobile, '0123456789');
-    });
+        final visitor = Visitor.fromJson(json);
+        expect(visitor.id, '42');
+        expect(visitor.mobile, '0123456789');
+      },
+    );
 
     test('Correctly handles null email and empty email fields', () {
       final jsonWithNull = {

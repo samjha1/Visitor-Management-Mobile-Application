@@ -79,12 +79,15 @@ void main() {
       expect(result.checkInTime, isNotNull);
     });
 
-    test('Registered visitor CANNOT check out (throws InvalidTransitionException)', () async {
-      expect(
-        () => repository.checkOut(registeredVisitor),
-        throwsA(isA<InvalidTransitionException>()),
-      );
-    });
+    test(
+      'Registered visitor CANNOT check out (throws InvalidTransitionException)',
+      () async {
+        expect(
+          () => repository.checkOut(registeredVisitor),
+          throwsA(isA<InvalidTransitionException>()),
+        );
+      },
+    );
 
     test('Checked In visitor CAN check out', () async {
       dioAdapter.onPut(
@@ -109,12 +112,15 @@ void main() {
       expect(result.checkOutTime, isNotNull);
     });
 
-    test('Checked In visitor CANNOT check in again (duplicate check-in rejected)', () async {
-      expect(
-        () => repository.checkIn(checkedInVisitor),
-        throwsA(isA<InvalidTransitionException>()),
-      );
-    });
+    test(
+      'Checked In visitor CANNOT check in again (duplicate check-in rejected)',
+      () async {
+        expect(
+          () => repository.checkIn(checkedInVisitor),
+          throwsA(isA<InvalidTransitionException>()),
+        );
+      },
+    );
 
     test('Checked Out visitor CANNOT check in or check out again', () async {
       expect(

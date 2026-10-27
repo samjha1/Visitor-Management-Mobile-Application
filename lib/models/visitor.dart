@@ -49,9 +49,15 @@ class Visitor {
 
     // Email is nullable
     final rawEmail = json['email']?.toString();
-    final email = (rawEmail != null && rawEmail.trim().isNotEmpty) ? rawEmail.trim() : null;
+    final email = (rawEmail != null && rawEmail.trim().isNotEmpty)
+        ? rawEmail.trim()
+        : null;
 
-    final visitorType = (json['visitor_type'] ?? json['visitorType'] ?? AppConstants.visitorTypeCustomer).toString();
+    final visitorType =
+        (json['visitor_type'] ??
+                json['visitorType'] ??
+                AppConstants.visitorTypeCustomer)
+            .toString();
     final project = (json['project'] ?? AppConstants.projectA).toString();
     final purpose = (json['purpose'] ?? '').toString();
     final status = (json['status'] ?? AppConstants.statusRegistered).toString();
@@ -104,7 +110,8 @@ class Visitor {
       'status': status,
       'created_at': createdAt.toIso8601String(),
       if (checkInTime != null) 'check_in_time': checkInTime!.toIso8601String(),
-      if (checkOutTime != null) 'check_out_time': checkOutTime!.toIso8601String(),
+      if (checkOutTime != null)
+        'check_out_time': checkOutTime!.toIso8601String(),
     };
   }
 

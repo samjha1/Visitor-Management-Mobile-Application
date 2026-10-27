@@ -4,7 +4,7 @@ import 'features/dashboard/screens/dashboard_screen.dart';
 import 'features/scanner/screens/qr_scanner_screen.dart';
 import 'features/visitors/screens/visitor_list_screen.dart';
 
-/// Root Application Widget with Bottom Navigation bar.
+/// Root Application Widget configured with Material 3 enterprise theme.
 class VisitorManagementApp extends StatelessWidget {
   const VisitorManagementApp({super.key});
 
@@ -19,7 +19,7 @@ class VisitorManagementApp extends StatelessWidget {
   }
 }
 
-/// Navigation shell managing bottom bar tabs: Dashboard, Visitors, and Scan.
+/// Navigation shell managing modern Material 3 NavigationBar: Dashboard, Visitors, and Scan.
 class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({super.key});
 
@@ -46,27 +46,24 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onTabSelected,
-        items: const [
-          BottomNavigationBarItem(
+      body: IndexedStack(index: _currentIndex, children: screens),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: _onTabSelected,
+        destinations: const [
+          NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
+            selectedIcon: Icon(Icons.dashboard_rounded),
             label: 'Dashboard',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.badge_outlined),
-            activeIcon: Icon(Icons.badge),
+            selectedIcon: Icon(Icons.badge_rounded),
             label: 'Visitors',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.qr_code_scanner_outlined),
-            activeIcon: Icon(Icons.qr_code_scanner),
+            selectedIcon: Icon(Icons.qr_code_scanner_rounded),
             label: 'Scan QR',
           ),
         ],

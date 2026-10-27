@@ -74,11 +74,15 @@ class ConfirmationDialog extends StatelessWidget {
         ElevatedButton(
           onPressed: () => Navigator.of(context).pop(true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: isDestructive ? AppColors.errorRed : AppColors.primaryNavy,
+            backgroundColor: isDestructive
+                ? AppColors.errorRed
+                : AppColors.primaryNavy,
             foregroundColor: Colors.white,
             minimumSize: const Size(90, 42),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
           child: Text(confirmLabel),
         ),

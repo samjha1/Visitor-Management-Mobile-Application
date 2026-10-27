@@ -16,11 +16,7 @@ class AppConstants {
   static const String projectB = 'Project B';
   static const String projectC = 'Project C';
 
-  static const List<String> projects = [
-    projectA,
-    projectB,
-    projectC,
-  ];
+  static const List<String> projects = [projectA, projectB, projectC];
 
   // Visitor Statuses
   static const String statusRegistered = 'Registered';

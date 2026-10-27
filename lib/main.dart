@@ -9,9 +9,5 @@ void main() async {
   // Load environment variables (.env)
   await AppConfig.initialize();
 
-  runApp(
-    const ProviderScope(
-      child: VisitorManagementApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: VisitorManagementApp()));
 }

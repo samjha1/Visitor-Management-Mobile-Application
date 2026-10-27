@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
-/// Reusable metric card displaying counts, semantic icons, and subtitles.
-class MetricCard extends StatelessWidget {
+/// Reusable stat card for the dashboard displaying visitor counts with
+/// modern enterprise accents and responsive constraints.
+class DashboardStatCard extends StatelessWidget {
   final String title;
   final int count;
   final String subtitle;
@@ -11,7 +12,7 @@ class MetricCard extends StatelessWidget {
   final Color iconBgColor;
   final VoidCallback? onTap;
 
-  const MetricCard({
+  const DashboardStatCard({
     super.key,
     required this.title,
     required this.count,
@@ -25,50 +26,60 @@ class MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 0.5,
+      elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         side: const BorderSide(color: AppColors.borderLight, width: 1),
       ),
+      margin: EdgeInsets.zero,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
+              // Icon container with restrained styling
               Container(
-                width: 52,
-                height: 52,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
                   color: iconBgColor,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: accentColor.withValues(alpha: 0.2)),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: accentColor.withValues(alpha: 0.18),
+                  ),
                 ),
-                child: Icon(icon, color: accentColor, size: 28),
+                child: Icon(icon, color: accentColor, size: 24),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
+
+              // Title, Count, and Subtitle
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textSecondary,
                         letterSpacing: 0.1,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       count.toString(),
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 24,
                         fontWeight: FontWeight.w800,
-                        color: accentColor,
-                        height: 1.1,
+                        color: AppColors.textPrimary,
+                        height: 1.15,
+                        letterSpacing: -0.5,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -79,9 +90,18 @@ class MetricCard extends StatelessWidget {
                         color: AppColors.textMuted,
                         fontWeight: FontWeight.w500,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
+              ),
+
+              // Small chevron
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: AppColors.textMuted,
               ),
             ],
           ),
@@ -90,3 +110,6 @@ class MetricCard extends StatelessWidget {
     );
   }
 }
+
+/// Backwards compatibility alias for MetricCard
+typedef MetricCard = DashboardStatCard;

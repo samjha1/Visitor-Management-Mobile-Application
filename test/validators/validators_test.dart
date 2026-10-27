@@ -40,11 +40,14 @@ void main() {
         expect(Validators.validateMobile('12345678901'), isNotNull);
       });
 
-      test('Accepts exactly 10 numeric digits and preserves leading zeroes', () {
-        expect(Validators.validateMobile('0123456789'), isNull);
-        expect(Validators.validateMobile('9876543210'), isNull);
-        expect(Validators.validateMobile(' 9876543210 '), isNull);
-      });
+      test(
+        'Accepts exactly 10 numeric digits and preserves leading zeroes',
+        () {
+          expect(Validators.validateMobile('0123456789'), isNull);
+          expect(Validators.validateMobile('9876543210'), isNull);
+          expect(Validators.validateMobile(' 9876543210 '), isNull);
+        },
+      );
     });
 
     group('Email Validator', () {

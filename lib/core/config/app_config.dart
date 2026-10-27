@@ -45,6 +45,7 @@ class AppConfig {
   /// Check if the current API base URL is a placeholder that requires user configuration.
   static bool get isPlaceholderUrl {
     final url = apiBaseUrl.toLowerCase();
-    return url.contains('replace-with-your') || url.contains('660000000000000000000000');
+    return url.contains('replace-with-your') ||
+        url.contains('660000000000000000000000');
   }
 }

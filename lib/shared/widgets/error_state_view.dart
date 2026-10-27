@@ -29,7 +29,10 @@ class ErrorStateView extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.errorLight,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.errorRed.withValues(alpha: 0.3), width: 1.5),
+                border: Border.all(
+                  color: AppColors.errorRed.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
               ),
               child: const Icon(
                 Icons.error_outline,

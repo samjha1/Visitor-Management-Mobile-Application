@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../models/visitor.dart';
 import '../../../providers/visitor_providers.dart';
@@ -10,17 +12,16 @@ import '../../../shared/widgets/confirmation_dialog.dart';
 import '../../../shared/widgets/status_chip.dart';
 import 'visitor_form_screen.dart';
 
-/// Screen displaying complete details of a visitor, their QR code, and check-in/out actions.
+/// Redesigned Visitor Details Screen showcasing an executive profile,
+/// high-contrast QR pass, primary check-in/out transitions, and activity timeline.
 class VisitorDetailsScreen extends ConsumerStatefulWidget {
   final Visitor initialVisitor;
 
-  const VisitorDetailsScreen({
-    super.key,
-    required this.initialVisitor,
-  });
+  const VisitorDetailsScreen({super.key, required this.initialVisitor});
 
   @override
-  ConsumerState<VisitorDetailsScreen> createState() => _VisitorDetailsScreenState();
+  ConsumerState<VisitorDetailsScreen> createState() =>
+      _VisitorDetailsScreenState();
 }
 
 class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen> {
@@ -31,6 +32,14 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen> {
   void initState() {
     super.initState();
     _visitor = widget.initialVisitor;
+  }
+
+  /// Generate two-letter initials from visitor name
+  String _getInitials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts[0].isEmpty) return 'V';
+    if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
   /// Synchronize with latest state from Riverpod store or refresh from server
@@ -61,7 +70,9 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen> {
     if (!_visitor.canCheckIn) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Cannot check in: Visitor is not in Registered status.'),
+          content: Text(
+            'Cannot check in: Visitor is not in Registered status.',
+          ),
           backgroundColor: AppColors.warningOrange,
         ),
       );
@@ -106,7 +117,9 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen> {
     if (!_visitor.canCheckOut) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Cannot check out: Visitor is not currently Checked In.'),
+          content: Text(
+            'Cannot check out: Visitor is not currently Checked In.',
+          ),
           backgroundColor: AppColors.warningOrange,
         ),
       );
@@ -176,7 +189,7 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Visitor deleted successfully.'),
+            content: Text('Visitor record deleted successfully.'),
             backgroundColor: AppColors.primaryNavy,
           ),
         );
@@ -194,9 +207,20 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen> {
     }
   }
 
+  /// Copy visitor ID to clipboard
+  void _copyVisitorId() {
+    Clipboard.setData(ClipboardData(text: _visitor.id));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Visitor ID "${_visitor.id}" copied to clipboard.'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Keep local visitor in sync with provider if updated elsewhere
+    // Keep local visitor in sync with provider updates
     ref.listen<AsyncValue<List<Visitor>>>(visitorListProvider, (_, next) {
       next.whenData((list) {
         final found = list.where((v) => v.id == _visitor.id).firstOrNull;
@@ -217,7 +241,7 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppColors.errorLight),
-            tooltip: 'Delete',
+            tooltip: 'Delete Record',
             onPressed: _isActionLoading ? null : _handleDelete,
           ),
         ],
@@ -225,64 +249,211 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen> {
       body: RefreshIndicator(
         onRefresh: _refreshVisitor,
         color: AppColors.primaryNavy,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 1. QR Code Card
-              _buildQrCodeCard(),
-              const SizedBox(height: 16),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppTheme.maxContentWidth,
+            ),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 1. Profile Header Hero Card
+                  _buildProfileHeroCard(),
+                  const SizedBox(height: 14),
 
-              // 2. Primary Status & Action Card
-              _buildStatusAndActionCard(),
-              const SizedBox(height: 16),
+                  // 2. Primary Action Bar (Check In / Check Out)
+                  _buildPrimaryActionBar(),
+                  const SizedBox(height: 14),
 
-              // 3. Visitor Profile Details Card
-              _buildProfileDetailsCard(),
-              const SizedBox(height: 16),
+                  // 3. QR Identification Pass Card
+                  _buildQrCodeCard(),
+                  const SizedBox(height: 14),
 
-              // 4. Timestamps Card
-              _buildTimestampsCard(),
-              const SizedBox(height: 24),
-            ],
+                  // 4. Contact & Visit Information Card
+                  _buildInformationCard(),
+                  const SizedBox(height: 14),
+
+                  // 5. Activity Timeline Card
+                  _buildTimelineCard(),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
+  Widget _buildProfileHeroCard() {
+    final avatarColor = AppColors.getAvatarColor(_visitor.name);
+    final initials = _getInitials(_visitor.name);
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            // Initials Avatar
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: avatarColor.withValues(alpha: 0.12),
+              child: Text(
+                initials,
+                style: TextStyle(
+                  color: avatarColor,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+
+            // Name + Status + ID badge
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _visitor.name,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.3,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      StatusChip(status: _visitor.status, isCompact: true),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: _copyVisitorId,
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceMuted,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: AppColors.borderLight),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '#${_visitor.id}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontFamily: 'monospace',
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.copy_rounded,
+                                size: 11,
+                                color: AppColors.textMuted,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrimaryActionBar() {
+    if (_visitor.isRegistered) {
+      return AppButton.primary(
+        label: 'Check In Visitor',
+        icon: Icons.login_rounded,
+        onPressed: _handleCheckIn,
+        isLoading: _isActionLoading,
+        backgroundColor: AppColors.accentTeal,
+      );
+    } else if (_visitor.isCheckedIn) {
+      return AppButton.primary(
+        label: 'Check Out Visitor',
+        icon: Icons.logout_rounded,
+        onPressed: _handleCheckOut,
+        isLoading: _isActionLoading,
+        backgroundColor: AppColors.primaryNavy,
+      );
+    } else {
+      // Completed Visit state
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        decoration: BoxDecoration(
+          color: AppColors.statusCheckedOutBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.statusCheckedOutBorder),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.done_all_rounded,
+              size: 20,
+              color: AppColors.statusCheckedOutText,
+            ),
+            SizedBox(width: 8),
+            Text(
+              'Visit Completed (Checked Out)',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.statusCheckedOutText,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   Widget _buildQrCodeCard() {
     return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.borderLight),
-      ),
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 20),
         child: Column(
           children: [
             const Text(
               'Visitor Pass QR Code',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             const Text(
-              'Scan at security checkpoint to lookup details',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
+              'Scan at security checkpoint for identity verification',
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
 
-            // Exact server-assigned ID encoded in QR
+            // High contrast QR Image
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -300,36 +471,29 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen> {
               child: QrImageView(
                 data: _visitor.id,
                 version: QrVersions.auto,
-                size: 180,
+                size: 170,
                 backgroundColor: Colors.white,
                 errorCorrectionLevel: QrErrorCorrectLevel.M,
               ),
             ),
             const SizedBox(height: 14),
 
-            // Server-assigned ID badge
+            // Server-assigned ID chip
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.surfaceMuted,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: AppColors.borderLight),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.tag, size: 14, color: AppColors.textSecondary),
-                  const SizedBox(width: 4),
-                  Text(
-                    'ID: ${_visitor.id}',
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
+              child: Text(
+                'Visitor ID: ${_visitor.id}',
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
           ],
@@ -338,161 +502,97 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen> {
     );
   }
 
-  Widget _buildStatusAndActionCard() {
+  Widget _buildInformationCard() {
     return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.borderLight),
-      ),
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Current Status',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                StatusChip(status: _visitor.status),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Primary Check-In / Check-Out Action Button
-            if (_visitor.isRegistered) ...[
-              AppButton(
-                label: 'Check In Visitor',
-                icon: Icons.login,
-                onPressed: _handleCheckIn,
-                isLoading: _isActionLoading,
-                backgroundColor: AppColors.accentTeal,
-              ),
-            ] else if (_visitor.isCheckedIn) ...[
-              AppButton(
-                label: 'Check Out Visitor',
-                icon: Icons.logout,
-                onPressed: _handleCheckOut,
-                isLoading: _isActionLoading,
-                backgroundColor: AppColors.primaryNavy,
-              ),
-            ] else ...[
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.statusCheckedOutBg,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.statusCheckedOutBorder),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.check_circle, size: 20, color: AppColors.statusCheckedOutText),
-                    SizedBox(width: 8),
-                    Text(
-                      'Visit Completed (Checked Out)',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.statusCheckedOutText,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileDetailsCard() {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.borderLight),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Visitor Information',
+              'Visit & Contact Information',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 16),
-            _buildDetailRow(Icons.person_outline, 'Name', _visitor.name),
-            _buildDetailRow(Icons.phone_outlined, 'Mobile', _visitor.mobile),
+            const SizedBox(height: 14),
+            _buildDetailRow(
+              Icons.phone_outlined,
+              'Mobile Number',
+              _visitor.mobile,
+            ),
             _buildDetailRow(
               Icons.email_outlined,
-              'Email',
+              'Email Address',
               _visitor.email ?? 'Not provided',
               isMuted: _visitor.email == null,
             ),
-            _buildDetailRow(Icons.badge_outlined, 'Visitor Type', _visitor.visitorType),
-            _buildDetailRow(Icons.apartment, 'Project', _visitor.project),
-            _buildDetailRow(Icons.notes_outlined, 'Purpose', _visitor.purpose, isLast: true),
+            _buildDetailRow(
+              Icons.badge_outlined,
+              'Visitor Type',
+              _visitor.visitorType,
+            ),
+            _buildDetailRow(
+              Icons.apartment_rounded,
+              'Assigned Project',
+              _visitor.project,
+            ),
+            _buildDetailRow(
+              Icons.notes_rounded,
+              'Purpose of Visit',
+              _visitor.purpose,
+              isLast: true,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTimestampsCard() {
+  Widget _buildTimelineCard() {
     return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.borderLight),
-      ),
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Visit Activity Timestamps',
+              'Visit Activity Timeline',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 16),
-            _buildDetailRow(
-              Icons.app_registration,
-              'Registration Time',
-              DateFormatter.formatDateTime(_visitor.createdAt),
+            const SizedBox(height: 14),
+            _buildTimelineItem(
+              icon: Icons.app_registration_rounded,
+              iconColor: AppColors.primaryNavy,
+              title: 'Registration Time',
+              timestamp: DateFormatter.formatDateTime(_visitor.createdAt),
+              isComplete: true,
             ),
-            _buildDetailRow(
-              Icons.login,
-              'Check-In Time',
-              _visitor.checkInTime != null
+            _buildTimelineItem(
+              icon: Icons.login_rounded,
+              iconColor: AppColors.accentTeal,
+              title: 'Check-In Time',
+              timestamp: _visitor.checkInTime != null
                   ? DateFormatter.formatDateTime(_visitor.checkInTime)
-                  : 'Pending check-in',
-              isMuted: _visitor.checkInTime == null,
+                  : 'Pending check-in by front desk',
+              isComplete: _visitor.checkInTime != null,
             ),
-            _buildDetailRow(
-              Icons.logout,
-              'Check-Out Time',
-              _visitor.checkOutTime != null
+            _buildTimelineItem(
+              icon: Icons.logout_rounded,
+              iconColor: AppColors.statusCheckedOutText,
+              title: 'Check-Out Time',
+              timestamp: _visitor.checkOutTime != null
                   ? DateFormatter.formatDateTime(_visitor.checkOutTime)
-                  : 'Pending check-out',
-              isMuted: _visitor.checkOutTime == null,
+                  : 'Pending visit completion',
+              isComplete: _visitor.checkOutTime != null,
               isLast: true,
             ),
           ],
@@ -513,10 +613,10 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: AppColors.textMuted),
+          Icon(icon, size: 17, color: AppColors.textSecondary),
           const SizedBox(width: 10),
           SizedBox(
-            width: 110,
+            width: 120,
             child: Text(
               label,
               style: const TextStyle(
@@ -530,10 +630,75 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen> {
             child: Text(
               value,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: isMuted ? AppColors.textMuted : AppColors.textPrimary,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimelineItem({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String timestamp,
+    required bool isComplete,
+    bool isLast = false,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: isComplete
+                  ? iconColor.withValues(alpha: 0.1)
+                  : AppColors.surfaceMuted,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isComplete
+                    ? iconColor.withValues(alpha: 0.3)
+                    : AppColors.borderLight,
+              ),
+            ),
+            child: Icon(
+              icon,
+              size: 16,
+              color: isComplete ? iconColor : AppColors.textMuted,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  timestamp,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isComplete ? FontWeight.w500 : FontWeight.w400,
+                    color: isComplete
+                        ? AppColors.textSecondary
+                        : AppColors.textMuted,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
